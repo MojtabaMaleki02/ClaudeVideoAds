@@ -171,7 +171,7 @@ def composite_plane(frame, cam, plane, layer_rgba, opacity=1.0, blur=0.0, focus=
     h, w = layer_rgba.shape[:2]
     corners = np.array([plane.world(0, 0), plane.world(plane.w, 0), plane.world(plane.w, plane.h), plane.world(0, plane.h)])
     cc = cam.to_cam(corners)
-    if (cc[:, 2] < 50).any(): return                     # behind or too close to the lens
+    if (cc[:, 2] < 50).any(): return                     # behind or too close to the lens (fade planes out before a fly-through)
     dst, _ = cam.project(corners)
     if dst[:, 0].max() < -RW or dst[:, 0].min() > 2 * RW or dst[:, 1].max() < -RH or dst[:, 1].min() > 2 * RH: return
     src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
@@ -329,11 +329,11 @@ _img_cache = {}
 def load_rgba(path, max_h=None):
     k = (path, max_h)
     if k not in _img_cache:
+        if len(_img_cache) >= 64: _img_cache.clear()   # bounded: every render worker holds its own copy
         im = Image.open(path).convert('RGBA')
         if max_h and im.height > max_h:
             im = im.resize((int(im.width * max_h / im.height), max_h), Image.LANCZOS)
         _img_cache[k] = np.asarray(im).copy()
-        if len(_img_cache) > 64: _img_cache.clear()    # bounded: every render worker holds its own copy
     return _img_cache[k]
 
 def pil_to_rgba(im):

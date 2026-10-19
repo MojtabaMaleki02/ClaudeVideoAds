@@ -65,9 +65,12 @@ public (posting, pushing). Report honestly at the end: substitutions, what was m
    Fix and re-still.
 8. **Sound.** `python3 mix.py`: music from `MUSIC`, cues, hero cues, the voice, master, and the QA report (LUFS,
    true peak, word margins full-range and on a phone speaker, Whisper intelligibility). Fix until it passes.
-9. **Finals.** `render.py film.py all out/frames_<fmt> -j 8` per format (background it), `render.py encode …`,
-   then `qa.motion_audit` (no missing frames, no near-black runs, no hard cuts unless intended, no one-frame pops).
-   Look at the fastest frames and every seam with `qa.strip`, and at `qa.safe_zones` on the 9:16 stills.
+9. **Finals.** First `render.py film.py check --fmt <fmt>` (a pre-flight sweep of every 5th frame at tiny scale: an
+   exception at one moment would otherwise kill workers an hour into the render). Then one format at a time:
+   `render.py film.py repair out/frames_<fmt>` (renders whatever is missing; resumable) → check the frame count →
+   `qa.motion_audit` (no missing frames, no near-black runs, no hard cuts unless intended, no one-frame pops) and
+   `qa.strip` on the fastest frames and every seam → `render.py encode …` → delete the frames (≈ 4.5 MB each).
+   See `reference/examples/got-you/finals.sh`. Check `qa.safe_zones` on the 9:16 stills.
 10. **Deliver** to `~/Desktop/clipzing-ads/<slug>/`: masters (CRF 15), the upload copy (`--upload`), a cover frame,
     `NOTES.md` (what was made, substitutions, measurements, honest limits), `POSTING.md` (caption, hashtags, first
     comment, UTM link), the brief and the source. Then ask for the post's numbers later (needs.md) and log them in

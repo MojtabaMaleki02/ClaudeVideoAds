@@ -166,6 +166,7 @@ def progress(L, box, p, color=C['accent'], track=C['bg_overlay'], glow=True):
 
 def ring(L, cx, cy, r, p, width=12, color=C['accent'], track=C['bg_overlay']):
     """A progress ring (score rings, approvals). p in 0..1, starts at 12 o'clock."""
+    if r <= max(1.0, width / 2): return          # too small to draw (mid pop-in)
     b = L.S(cx - r, cy - r, cx + r, cy + r)
     L.d.arc(b, 0, 360, fill=track + (255,), width=int(width * L.ss))
     if p > 0.001:
@@ -176,6 +177,7 @@ def score_color(score):
 
 def score_badge(L, cx, cy, score, r=46, p=1.0, label=True):
     """The virality score as the product shows it: a ring in its band colour with the number inside."""
+    if r < 10: return                            # mid pop-in: nothing legible yet
     col = score_color(score)
     L.d.ellipse(L.S(cx - r, cy - r, cx + r, cy + r), fill=C['bg_sunken'] + (230,))
     ring(L, cx, cy, r - 5, p * score / 100, width=max(5, r * 0.16), color=col, track=(40, 44, 58))

@@ -490,7 +490,9 @@ def scene(t):
     fi = int(t * 30)
     # S1
     if t < WH['profile'][0] + 0.5:
-        composite_plane(frame, cam, WALL, wall_layer(t), focus=foc, opacity=1 - 0.5 * prog(t, T['right'] + 0.4, WH['profile'][0]))
+        # the camera flies THROUGH the wall: fade it out before the lens reaches its plane (or it pops away in one frame)
+        wall_op = (1 - 0.5 * prog(t, T['right'] + 0.4, WH['profile'][0])) * (1 - prog(t, WH['profile'][0] + 0.08, WH['profile'][0] + 0.22))
+        composite_plane(frame, cam, WALL, wall_layer(t), focus=foc, opacity=wall_op)
         hy = pf(H * 0.47, H * 0.5)
         if t > T['did'] - 0.25: scrim(frame, hy, pf(330, 300), 0.6 * (1 - prog(t, WH['profile'][0], WH['profile'][0] + 0.3)))
         scrim(frame, pf(262, 68), pf(170, 130), 0.55 * prog(t, 0.2, 0.5) * (1 - prog(t, WH['profile'][0], WH['profile'][0] + 0.25)))   # behind the lock-up

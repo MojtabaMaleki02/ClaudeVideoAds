@@ -6,6 +6,8 @@
   render.py FILM.py all FRAMES_DIR -j 8         [--fmt 9x16] [--fps 60]      every frame, in parallel workers
   render.py FILM.py frames FRAMES_DIR --from 0 --to 120 [--every N --offset k]   (what a worker runs)
   render.py FILM.py repair FRAMES_DIR -j 8      [--fmt …]                    re-render only missing / corrupt frames
+  render.py FILM.py check                       [--fmt …]                    PRE-FLIGHT: every 5th frame at tiny scale; lists
+                                                                               exceptions BEFORE a multi-hour render
   render.py encode FRAMES_DIR OUT.mp4 [--audio mix.wav] [--fps 60] [--upload]
   render.py sheet VIDEO OUT.jpg
 
@@ -101,8 +103,21 @@ def main():
         print(f'{args.fmt}: {have}/{n} frames in {time.time() - t0:.0f} s' + (f' — {len(bad)} worker(s) FAILED' if bad else ''))
         sys.exit(1 if bad or have < n else 0)
 
+    if args.mode == 'check':
+        os.environ['SCALE'] = '0.2'
     film = load_film(args.film)
     from adkit import render as R
+    if args.mode == 'check':
+        import traceback
+        n = int(round(film.END * fps)); bad = []
+        for i in range(0, n, 5):
+            try:
+                R.render_frame(film, i / fps)
+            except Exception as e:  # noqa: BLE001
+                bad.append((i, repr(e)[:160], traceback.format_exc().strip().splitlines()[-3]))
+        print(f'check {args.fmt}: {len(bad)} failing frames of {len(range(0, n, 5))} sampled')
+        for b in bad[:8]: print('  frame', b[0], b[1], '|', b[2].strip())
+        sys.exit(1 if bad else 0)
     if args.mode == 'stills':
         os.makedirs(args.out, exist_ok=True)
         paths = []
@@ -134,7 +149,7 @@ def main():
         R.encode(d, args.out, audio=audio, fps=fps, crf=20, preset='veryfast')
         print('preview', args.out)
     else:
-        ap.error('mode must be stills | preview | all | frames | repair')
+        ap.error('mode must be stills | preview | all | frames | repair | check')
 
 if __name__ == '__main__':
     main()

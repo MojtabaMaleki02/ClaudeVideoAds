@@ -34,6 +34,9 @@ Pick one device per film. Write it in one sentence in the brief: "One ___, many 
 - **One "wow" per scene, resolving into a crisp frame held ≥ 0.4 s** so it can be read.
 - Smooth eased motion and C1 camera paths (`catmull`, `einout`); whips are fast in the middle and eased at the ends.
 - Roll ≤ 8° on whips. A shake only on hits (`shake_at`), decaying in ~0.3 s.
+- **Flying THROUGH a plane:** when the camera passes through a station (a wall of clips, a card), fade that plane
+  out before the lens reaches it. `composite_plane` drops a plane the moment a corner goes behind the lens, so
+  without the fade it vanishes in one frame (the audit flags it as a hard cut).
 - **A stage beats a journey.** RAID's first draft flew six seconds through a city; a keynote stage where things pop
   on the beat read faster. Don't fly far when popping things in place says it in one look.
 
