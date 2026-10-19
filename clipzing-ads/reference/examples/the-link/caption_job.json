@@ -1,0 +1,39 @@
+{
+ "template": "pepper",
+ "words": [
+  {
+   "text": "and",
+   "start": 0.12,
+   "end": 0.24
+  },
+  {
+   "text": "times",
+   "start": 0.24,
+   "end": 0.72
+  },
+  {
+   "text": "every",
+   "start": 0.72,
+   "end": 1.06
+  },
+  {
+   "text": "word.",
+   "start": 1.06,
+   "end": 1.92
+  }
+ ],
+ "duration": 1.97,
+ "fps": 60,
+ "config": {
+  "typography": {
+   "fontSize": 6.8
+  },
+  "position": {
+   "verticalOffset": 0.7
+  },
+  "controls": {
+   "highlight-bg-color": "#7c3aed",
+   "shadow-color": "#05030a"
+  }
+ }
+}

@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- One page for every capture: ?e=<entry>&w=<px>&h=<px>#<args>. Loads dist/<entry>.js + .css (built by build.mjs).
+     A virtual clock makes every frame deterministic: timers, CSS animations and videos run on the film's time. -->
+<style>@font-face{font-family:'Plus Jakarta Sans';src:url('/_fonts/PlusJakartaSans[wght].ttf') format('truetype');font-weight:200 800;font-display:block}
+html,body{margin:0;background:transparent!important;overflow:hidden}</style>
+<script>
+(function(){
+  const q = new URLSearchParams(location.search), e = q.get('e') || 'zing';
+  document.documentElement.style.width = document.body ? '' : '';
+  const st = document.createElement('style');
+  st.textContent = `html,body{width:${q.get('w')||900}px;height:${q.get('h')||900}px}`;
+  document.head.appendChild(st);
+  for (const href of ['dist/tw.css', `dist/${e}.css`]) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); }
+  window.__ENTRY = e;
+})();
+</script>
+<script>
+// Virtual clock: timers fire on the film's time, not the wall clock (React itself schedules via MessageChannel).
+(function(){
+  let vnow = 0, id = 1; const q = new Map();
+  const realST = window.setTimeout.bind(window);
+  window.__realSetTimeout = realST;
+  window.setTimeout = (cb, ms, ...a) => { const k = id++; q.set(k, { at: vnow + (ms||0)/1000, cb, a }); return k; };
+  window.clearTimeout = (k) => q.delete(k);
+  window.setInterval = (cb, ms) => { const k = id++; const tick = () => { q.set(k, { at: vnow + ms/1000, cb: () => { cb(); tick(); }, a: [] }); }; tick(); return k; };
+  window.clearInterval = (k) => q.delete(k);
+  const births = new WeakMap();
+  const sleep = (ms) => new Promise(r => realST(r, ms));
+  window.__frame = async (t) => {
+    for (let guard = 0; guard < 50; guard++) {
+      let next = null;
+      for (const [k, v] of q) if (v.at <= t && (!next || v.at < next[1].at)) next = [k, v];
+      if (!next) break;
+      q.delete(next[0]); vnow = next[1].at; try { next[1].cb(...next[1].a); } catch (e) { console.error(e); }
+    }
+    vnow = t;
+    window.__setT(t);
+    await sleep(0); window.__setT(t);
+    document.body.getBoundingClientRect();
+    for (const a of document.getAnimations()) {
+      if (!births.has(a)) births.set(a, t);
+      a.pause(); a.currentTime = Math.max(0, (t - births.get(a)) * 1000);
+    }
+    const vids = [...document.querySelectorAll('video')];
+    await Promise.all(vids.map(v => new Promise(res => {
+      const go = () => {
+        const d = v.duration || 1;
+        let ct = (+v.dataset.in) + Math.max(0, t - (+v.dataset.t0));
+        ct = ct % (d - 0.05);
+        if (Math.abs(v.currentTime - ct) < 0.004 && v.readyState >= 2) return res();
+        const done = () => { v.removeEventListener('seeked', done); res(); };
+        v.addEventListener('seeked', done); v.currentTime = ct;
+        realST(done, 3000);
+      };
+      if (v.readyState >= 1) go(); else v.addEventListener('loadedmetadata', go, { once: true });
+    })));
+    // every footage frame must be decoded before the shot is taken
+    await Promise.all([...document.images].map(i => (i.complete && i.naturalWidth ? i.decode() : new Promise(r => { i.onload = r; i.onerror = r; realST(r, 3000) })).catch(() => {})));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return true;
+  };
+})();
+</script></head><body><div id="root"></div><script>document.write(`<script src="dist/${window.__ENTRY}.js"><\/script>`)</script></body></html>
