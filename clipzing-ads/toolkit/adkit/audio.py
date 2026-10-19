@@ -466,7 +466,9 @@ def transcribe(path, model='base'):
 def intelligibility(dry_vo, final_mix):
     """Whisper reads the dry voice and the final mix; any word that changes is masked by something in the mix."""
     a, b = transcribe(dry_vo), transcribe(final_mix)
-    na = re.findall(r"[a-z0-9']+", a.lower()); nb = re.findall(r"[a-z0-9']+", b.lower())
+    same = {'be': 'b', 'bee': 'b', 'see': 'c', 'sea': 'c', 'you': 'u', 'are': 'r', 'clipsing': 'clipzing', 'clipzing': 'clipzing'}   # sounds the same
+    norm = lambda x: [same.get(w, w) for w in re.findall(r"[a-z0-9']+", x.lower())]
+    na, nb = norm(a), norm(b)
     import difflib
     diff = [(op, na[i1:i2], nb[j1:j2]) for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, na, nb).get_opcodes() if op != 'equal']
     return {'dry': a, 'mix': b, 'changed': diff}

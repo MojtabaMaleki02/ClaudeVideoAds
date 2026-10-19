@@ -89,6 +89,7 @@ text with or a hair before the voice; never karaoke captions, strobe, flares to 
 tumbles, dolly zoom, one-frame pops, re-centring text, or near-black for more than 0.3 s.
 **Sound.** Music ≥ 12 dB under every word (aim 15), hero cues after words, impacts a frame early, master −14 LUFS
 / ≤ −1.25 dBTP, Whisper reads the mix like the dry voice.
+**Physical, not a slideshow.** One big extruded object per feature, filling the frame, seen off-axis (craft.md §1b).
 **Owner's taste.** Dark theme. Premium, never generic: deeper purple, lit edges, crisp hairlines; no bright gradient
 + glow + colour-swap. Zing's face matches the line (no cute faces over serious narration).
 
@@ -96,7 +97,8 @@ tumbles, dolly zoom, one-frame pops, re-centring text, or near-black for more th
 ```python
 from adkit.core import *            # W H PORTRAIT SCALE FPS D · Camera Plane(.home .framing .world .worlds) · pose_mix catmull
                                     # prog lerp eout ein einout eback spring pulse smooth_noise · shake_at · new_frame stage grade
-                                    # composite_plane composite_sprite composite_screen after_grade · draw_line (THE line) · proj1
+                                    # composite_plane composite_extruded(plane, face, depth) plane_shift composite_sprite composite_screen
+                                    # after_grade · draw_line (THE line) · proj1 screen_scale
 from adkit import brand, ui, fx, audio, voice, qa
 brand.C / brand.font(size, weight, family) / brand.wordmark() / brand.wordmark_text() / brand.icon() / brand.zing(pose, t) / brand.zing_box(pose)
 brand.footage(scene, t, w, h) / brand.screen(name) / brand.PLATFORM
@@ -107,7 +109,7 @@ fx.strands fx.shards fx.swarm(+ sample_mask) fx.sweep_layer fx.anamorphic fx.dus
 timeline.Words(path, offset).t/.end/.after/.phrases · timeline.Cues().add(t, kind, x, size) · timeline.Grid(bpm, t0)
 audio.score(end, style, drop, lift, breath, stop, hit, sting) · audio.SFX · audio.HERO{clip_ready, published, logo_sting, logo_hit, logo_chord}
 audio.build_mix(...) · audio.master(...) · audio.report(...) · audio.Library (owner's SFX folder via SFX_LIBRARY)
-voice.tts(...) · voice.timings(...) · voice.estimate_cost(...)
+voice.tts(...) · voice.tighten(take, out) (feed pacing) · voice.timings(...) · voice.estimate_cost(...)
 qa.motion_audit qa.strip qa.safe_zones qa.claims_lint
 ```
 A film module defines `END`, `scene(t) -> (frame, deferred)`, optional `camera_at(t)`, `probe(t)`, `overlay(frame, t)`,

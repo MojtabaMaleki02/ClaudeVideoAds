@@ -174,19 +174,46 @@ def composite_plane(frame, cam, plane, layer_rgba, opacity=1.0, blur=0.0, focus=
     if (cc[:, 2] < 50).any(): return                     # behind or too close to the lens (fade planes out before a fly-through)
     dst, _ = cam.project(corners)
     if dst[:, 0].max() < -RW or dst[:, 0].min() > 2 * RW or dst[:, 1].max() < -RH or dst[:, 1].min() > 2 * RH: return
-    src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-    M = cv2.getPerspectiveTransform(src, dst.astype(np.float32))
     pm = to_premul(layer_rgba)
     # big minification aliases: pre-shrink the layer when it lands much smaller than it is
     span = max(np.ptp(dst[:, 0]), 1.0)
     if span < w * 0.5:
         k = max(span / w * 1.5, 0.05)
         pm = cv2.resize(pm, (max(2, int(w * k)), max(2, int(h * k))), interpolation=cv2.INTER_AREA)
-        M = cv2.getPerspectiveTransform(np.float32([[0, 0], [pm.shape[1], 0], [pm.shape[1], pm.shape[0]], [0, pm.shape[0]]]), dst.astype(np.float32))
-    warped = cv2.warpPerspective(pm, M, (RW, RH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    ph, pw = pm.shape[:2]
     blur = max(blur, dof_blur(cam, plane.c, focus))
+    # warp only into the object's screen box (plus room for blur), not the whole frame
+    pad = int(blur * 3) + 2
+    bx0, by0 = max(0, int(dst[:, 0].min()) - pad), max(0, int(dst[:, 1].min()) - pad)
+    bx1, by1 = min(RW, int(np.ceil(dst[:, 0].max())) + pad), min(RH, int(np.ceil(dst[:, 1].max())) + pad)
+    if bx1 <= bx0 or by1 <= by0: return
+    M = cv2.getPerspectiveTransform(np.float32([[0, 0], [pw, 0], [pw, ph], [0, ph]]), (dst - [bx0, by0]).astype(np.float32))
+    warped = cv2.warpPerspective(pm, M, (bx1 - bx0, by1 - by0), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
     if blur > 0.6: warped = cv2.GaussianBlur(warped, (0, 0), blur)
-    (add if mode == 'add' else over)(frame, warped, opacity)
+    (add if mode == 'add' else over)(frame[by0:by1, bx0:bx1], warped, opacity)
+
+def plane_shift(plane, d):
+    """A copy of a plane moved d world units along its normal (negative = behind it, away from the camera)."""
+    import copy
+    p = copy.copy(plane); p.c = plane.c + plane.n * d
+    return p
+
+def composite_extruded(frame, cam, plane, face_rgba, depth=40.0, steps=9, side=(46, 30, 92), opacity=1.0, focus=None, blur=0.0, rim=True):
+    """A chunky physical object: the face plus `steps` shaded copies of its silhouette stacked `depth` behind it, so
+    the camera sees its thickness in true perspective (the brand's 3D-button language, made real). The side darkens
+    toward the back; a faint rim light sits on the front edge."""
+    if opacity <= 0.003 or face_rgba is None: return
+    a = face_rgba[..., 3]
+    sil = np.zeros_like(face_rgba)
+    sil[..., 3] = a
+    for k in range(steps, 0, -1):
+        shade = 0.45 + 0.55 * (1 - k / steps) ** 1.4
+        sil[..., :3] = (np.array(side, np.float32) * shade).astype(np.uint8)
+        composite_plane(frame, cam, plane_shift(plane, -depth * k / steps), sil, opacity, blur, focus)
+    if rim:   # a lit lip just behind the face
+        sil[..., :3] = np.minimum(255, np.array(side, np.float32) * 1.9).astype(np.uint8)
+        composite_plane(frame, cam, plane_shift(plane, -depth * 0.12), sil, opacity * 0.9, blur, focus)
+    composite_plane(frame, cam, plane, face_rgba, opacity, blur, focus)
 
 def composite_sprite(frame, img_rgba, cx, cy, height, sx=1.0, sy=1.0, rot=0.0, opacity=1.0, anchor=(0.5, 0.5), blur=0.0, mode='over'):
     """Place an RGBA sprite in screen space (full-size pixel coords). Squash/stretch via sx, sy about the anchor."""
@@ -338,3 +365,18 @@ def load_rgba(path, max_h=None):
 
 def pil_to_rgba(im):
     return np.asarray(im.convert('RGBA')).copy()
+
+def contact_shadow(frame, cam, plane, strength=0.55, spread=1.0):
+    """A soft contact shadow under a plane-object so it sits in the world (never floats). Clamped: when the camera
+    is on top of the object the projected ellipse explodes, and an unclamped blur sigma allocates a giant kernel
+    (that OOM-killed a render). Skips itself in that case."""
+    x, y, z = proj1(cam, plane.world(plane.w / 2, plane.h) - v3(0, 40, 0))
+    x1, _, _ = proj1(cam, plane.world(0, plane.h)); x2, _, _ = proj1(cam, plane.world(plane.w, plane.h))
+    if z < 100: return
+    rx = max(4.0, abs(x2 - x1) * 0.55 * spread); ry = max(3.0, rx * 0.12)
+    hh, ww = frame.shape[:2]
+    if rx > ww * 3 or not (-ww < x < 2 * ww) or not (-hh < y < 2 * hh): return
+    ry = min(ry, hh * 0.15)
+    m = np.zeros((hh, ww), np.float32)
+    cv2.ellipse(m, (int(x), int(y + ry)), (int(rx), int(ry)), 0, 0, 360, strength, -1, cv2.LINE_AA)
+    frame *= (1 - cv2.GaussianBlur(m, (0, 0), min(max(2.0, ry * 1.2), 40.0))[..., None])

@@ -16,6 +16,27 @@ The strongest films have ONE visual device that carries the whole story and gets
   real examples, a drop on the logo. (The fintech launch structure, for launching copilot, agents or autopilot.)
 Pick one device per film. Write it in one sentence in the brief: "One ___, many jobs."
 
+## 1b. Physical, not a slideshow (the owner's verdict on Got You v1)
+Got You v1 put nine features on nine flat UI panels (a timeline strip, a phone with small captions, a timeline track
+for B-roll, a spreadsheet-like calendar). The owner: "sooooo bad … horrible … the quality must be much better", and
+it felt worse than The Path. The fix (Got You v2) is the house style for every film:
+- **Every feature is ONE big physical object**, built in Clipzing's chunky language and EXTRUDED
+  (`core.composite_extruded`): a bright purple face, a deep violet lip, a glossy sheen, real depth seen off-axis.
+  Examples: a jammed follower counter; a long-video slab that the line slices into vertical shorts that fan out
+  (best moment centre, gold score chip); giant single words, each in a different REAL caption style; a monitor
+  with viewfinder brackets that lock on, plus the live 9:16 result beside it; ONE card whose picture swaps to the
+  cutaway under its caption (that is what B-roll is); a desk calendar with binding rings and a streak badge.
+- **Captions at their real size.** Show Clipzing captions the way a short shows them: lower third, normal size,
+  word by word, inside a clip. Giant single words filling the screen read as "horrible … oversized" (the owner,
+  Got You v2 draft). Several styles: the same spoken line on three side-by-side cards (16:9), or one big card that
+  flips to the next real style mid-line, its label following (9:16). See examples/got-you-v2.
+- **Show the result, not the settings**: the output short next to the input, the word lit where the B-roll lands.
+- **Fill the frame**: objects at 70–90 % of the width; never small UI in a big empty frame.
+- **Camera off-axis** (`off_axis(center, yaw, pitch, dist)`) so thickness shows; contact shadows ground every object.
+- **No literal UI chrome** (timelines, settings rows, tiny checkmarks) unless the idea IS that UI.
+- **Pace like the feed**: ~3.2–3.6 words per second. TTS ignores "speak faster", so `voice.tighten()` cuts pauses
+  and adds a pitch-preserving tempo boost (listen for clipped word endings; its detector hears to 9 kHz).
+
 ## 2. The hook (the first second decides everything)
 - **Readable and in motion within 0.3 s, on mute.** Frame 1 already says something.
 - **One big slam on the first beat**, not a montage: Zing rushes from depth and slams at ~0.17 s at about half the

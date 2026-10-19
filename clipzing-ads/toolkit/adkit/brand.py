@@ -155,6 +155,7 @@ def footage(name, t, w, h, fps=30):
     i = i if i < n else 2 * n - 2 - i
     k = ('foot', name, i, int(w), int(h))
     if k in core._img_cache: return core._img_cache[k]
+    if len(core._img_cache) >= 64: core._img_cache.clear()     # bounded (morphing cards ask for a new size every frame)
     im = cv2.cvtColor(cv2.imread(os.path.join(d, fr[i]), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
     s = max(w / im.shape[1], h / im.shape[0])
     im = cv2.resize(im, (int(im.shape[1] * s) + 1, int(im.shape[0] * s) + 1), interpolation=cv2.INTER_AREA)

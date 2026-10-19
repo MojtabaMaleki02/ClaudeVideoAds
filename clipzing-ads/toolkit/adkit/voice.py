@@ -40,7 +40,14 @@ def openai_tts(text, out_wav, voice='coral', instructions='', model='gpt-4o-mini
     body = json.dumps({'model': model, 'voice': voice, 'input': text, 'instructions': instructions, 'response_format': 'wav'}).encode()
     req = urllib.request.Request('https://api.openai.com/v1/audio/speech', data=body,
                                  headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=180) as r, open(out_wav + '.raw.wav', 'wb') as f: f.write(r.read())
+    import time
+    for attempt in range(4):                 # the stream sometimes stalls: retry with backoff
+        try:
+            with urllib.request.urlopen(req, timeout=180) as r, open(out_wav + '.raw.wav', 'wb') as f: f.write(r.read())
+            break
+        except (TimeoutError, OSError) as e:
+            if attempt == 3: raise
+            time.sleep(5 * (attempt + 1))
     _rewrap(out_wav + '.raw.wav', out_wav)
     return out_wav
 
@@ -143,3 +150,52 @@ def timings(wav, out_json, script=None, model='base'):
         words = out
     json.dump(words, open(out_json, 'w'), indent=1)
     return words
+
+def tighten(wav, out, gap=0.09, sentence_gap=0.16, tempo=1.1, script=None):
+    """Social pacing, done in the edit: every pause is cut to `gap` (`sentence_gap` after . ? !), then a pitch-preserving
+    tempo boost. TTS ignores 'speak faster'; this doesn't. Returns the new duration."""
+    import scipy.io.wavfile as wf
+    tmp = out + '.48k.wav'
+    subprocess.check_call(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-ar', '48000', tmp])
+    sr, x = wf.read(tmp); os.remove(tmp)
+    x = x.astype(np.float32) / (32768 if x.dtype == np.int16 else 1)
+    hop = int(0.005 * sr)
+    from scipy.signal import butter, sosfilt
+    band = sosfilt(butter(4, [150, 9000], 'band', fs=sr, output='sos'), x)   # up to 9 kHz: an 's' is speech, not silence
+    env = np.sqrt(np.convolve(band ** 2, np.ones(hop * 4) / (hop * 4), 'same'))[::hop]
+    thr = max(1e-4, np.percentile(env, 95) * 0.04)
+    voiced = env > thr
+    # silent runs longer than the target gap get shortened (keep 30 ms fades either side)
+    pieces, i, n = [], 0, len(voiced)
+    runs = []
+    while i < n:
+        if not voiced[i]:
+            j = i
+            while j < n and not voiced[j]: j += 1
+            runs.append((i, j)); i = j
+        else:
+            i += 1
+    # which pauses end a sentence: approximate from the script's punctuation order
+    marks = re.findall(r'[.?!]|[,;:]', script or '')
+    keep = np.ones(len(x), bool)
+    k = 0
+    for a, b in runs:
+        dur = (b - a) * hop / sr
+        if a == 0 or b >= n:                       # trim leading / trailing silence to 50 ms
+            s0, s1 = a * hop, b * hop
+            if a == 0: keep[: max(0, s1 - int(0.05 * sr))] = False
+            else: keep[s0 + int(0.05 * sr):] = False
+            continue
+        if dur < 0.06: continue
+        mark = marks[k] if k < len(marks) else ','
+        k += 1
+        target = sentence_gap if mark in '.?!' else gap
+        if dur > target:
+            c = (a * hop + b * hop) // 2; half = int(target * sr / 2)
+            keep[a * hop + half: c] = False; keep[c: b * hop - half] = False
+    y = x[keep]
+    tmp2 = out + '.cut.wav'
+    wf.write(tmp2, sr, (y * 32767).astype(np.int16))
+    subprocess.check_call(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-i', tmp2, '-af', f'atempo={tempo}', '-ar', '48000', '-ac', '1', out])
+    os.remove(tmp2)
+    return duration(out)
