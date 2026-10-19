@@ -22,9 +22,11 @@ from . import core
 def _default_ss():
     return 2 if core.SCALE >= 0.99 else 1   # previews skip supersampling
 
-def cached(maxsize=256):
+def cached(maxsize=24):
     """Cache a layer-building function on its (quantised) arguments: UI is drawn once, not per motion-blur sample.
-    Quantise continuous inputs yourself, e.g. build(round(p, 2)), so nearby sub-frames share a layer."""
+    Quantise continuous inputs yourself, e.g. build(round(p, 2)), so nearby sub-frames share a layer.
+    MEMORY: a full-frame layer is ~8 MB (9:16 RGBA) and every render worker keeps its own cache. Keep maxsize small
+    (8–32) for layers that change every frame; large caches × 8 workers swapped a 17 GB Mac to death (Got You)."""
     return functools.lru_cache(maxsize=maxsize)
 
 class Layer:

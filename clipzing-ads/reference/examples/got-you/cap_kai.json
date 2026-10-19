@@ -1,0 +1,36 @@
+{
+ "template": "kai",
+ "words": [
+  {
+   "text": "timed",
+   "start": 0.08,
+   "end": 0.41
+  },
+  {
+   "text": "to",
+   "start": 0.41,
+   "end": 0.61
+  },
+  {
+   "text": "every",
+   "start": 0.61,
+   "end": 0.91
+  },
+  {
+   "text": "word.",
+   "start": 0.91,
+   "end": 2.045
+  }
+ ],
+ "duration": 2.045,
+ "fps": 60,
+ "t0": 20.36,
+ "config": {
+  "typography": {
+   "fontSize": 6.0
+  },
+  "position": {
+   "verticalOffset": 0.7
+  }
+ }
+}

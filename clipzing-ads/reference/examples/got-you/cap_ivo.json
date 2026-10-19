@@ -1,0 +1,31 @@
+{
+ "template": "ivo",
+ "words": [
+  {
+   "text": "Captions",
+   "start": 0.08,
+   "end": 0.37
+  },
+  {
+   "text": "that",
+   "start": 0.37,
+   "end": 0.63
+  },
+  {
+   "text": "pop,",
+   "start": 0.63,
+   "end": 0.94
+  }
+ ],
+ "duration": 0.94,
+ "fps": 60,
+ "t0": 17.54,
+ "config": {
+  "typography": {
+   "fontSize": 6.0
+  },
+  "position": {
+   "verticalOffset": 0.7
+  }
+ }
+}

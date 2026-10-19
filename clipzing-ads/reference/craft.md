@@ -50,6 +50,10 @@ Pick one device per film. Write it in one sentence in the brief: "One ___, many 
   film. Real Clipzing captions appear only as the PRODUCT (inside a phone, showing what Clipzing makes).
 - Text holds long enough to read: about 0.3 s per word plus 0.5 s, never less than 0.6 s.
 - No text that slides to re-centre itself (lay out the final line first, then reveal it).
+- A stack of slams: each one leaves BEFORE the next starts its rush (≈ 0.4 s before the next word), or the words pile up.
+- Over busy footage (a wall of clips), put a soft dark scrim behind type and behind the top lock-up.
+- Platform marks: the official shapes (simple-icons, CC0, as on Clipzing's site) as app tiles in each brand's colours,
+  ALWAYS with what Clipzing truly does there ("Shorts · published", "TikTok · to drafts", "Reels · export").
 - Phone readability at 9:16 (1080 × 1920): supers ≥ 72 px, UI labels ≥ 34 px, nothing under 26 px.
 
 ## 6. Product UI

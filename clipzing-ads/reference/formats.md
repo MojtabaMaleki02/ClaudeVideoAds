@@ -28,7 +28,13 @@ with `if core.PORTRAIT:` (stack instead of side-by-side, bigger type, the phone 
 - Preview (half size, 30 fps): about 1–3 min for 20 s.
 - Final 60 fps, full size: about 10–20 min per format for 20 s (motion-blurred frames cost ×N sub-samples).
 - Long-form at 60 fps scales linearly (90 s ≈ 1–1.5 h per format). Use 30 fps for talky tours, 60 fps for showpieces.
-- `render.py FILM all OUT -j 8` interleaves frames across workers; it can also run in the background.
+- `render.py FILM all OUT` interleaves frames across workers (default: CPUs, capped at ~2.2 GB of RAM per worker).
+- **Memory:** a full-frame layer is ~8 MB and every worker caches its own. Keep `@ui.cached(8)` on layers that change
+  every frame. Too many workers × big caches swaps the machine and kills workers mid-render.
+- **Disk:** full-size PNG frames are ~4.5 MB each at 9:16 (a 38 s film ≈ 10 GB per format). Render one format,
+  audit, encode, delete its frames, then the next. `render.py` refuses to start without room, and `repair` re-renders
+  only missing or corrupt frames.
+- **A finals chain must stop on failure:** check the frame count before encoding (see the-link / got-you `finals.sh`).
 
 ## Delivery
 - Master: H.264 CRF 15, yuv420p, AAC 320k, faststart (`render.py encode`).

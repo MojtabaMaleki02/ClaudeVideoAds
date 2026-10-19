@@ -36,7 +36,7 @@ def main():
     ap.add_argument('--fmt', default=os.environ.get('FMT', '9x16'))
     ap.add_argument('--scale', type=float, default=None)
     ap.add_argument('--fps', type=int, default=int(os.environ.get('FPS', '60')))
-    ap.add_argument('-j', '--jobs', type=int, default=max(1, (os.cpu_count() or 2) - 0))
+    ap.add_argument('-j', '--jobs', type=int, default=None, help='workers (default: CPUs, capped by RAM at ~2 GB per worker)')
     ap.add_argument('--from', dest='a', type=int, default=0); ap.add_argument('--to', dest='b', type=int, default=None)
     ap.add_argument('--every', type=int, default=1); ap.add_argument('--offset', type=int, default=0)
     ap.add_argument('--audio', default=None); ap.add_argument('--upload', action='store_true')
@@ -54,6 +54,12 @@ def main():
         R.contact_sheet(args.mode, args.out); print('sheet', args.out); return
 
     scale = args.scale if args.scale is not None else (0.5 if args.mode in ('stills', 'preview') else 1.0)
+    if args.jobs is None:
+        try:
+            ram = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES') / 1e9
+        except (ValueError, OSError):
+            ram = 16
+        args.jobs = max(1, min(os.cpu_count() or 2, int(ram / 2.2)))
     fps = 30 if args.mode == 'preview' else args.fps
     os.environ.update(FMT=args.fmt, SCALE=str(scale), FPS=str(fps))
 

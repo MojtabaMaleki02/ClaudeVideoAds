@@ -47,8 +47,9 @@ def shards(frame, t, at, cx, cy, n=26, color=(0xC4, 0xB5, 0xFD), speed=1500, lif
         rot = ang + dt * rng.uniform(-8, 8)
         pts = np.array([[math.cos(rot + q) * s * (1.6 if q == 0 else 0.7), math.sin(rot + q) * s * (1.6 if q == 0 else 0.7)] for q in (0, 2.2, 4.1)])
         poly = np.int32((pts + [x, y]) * k * 8)
-        col = tuple(float(c) / 255 * a for c in color)
-        cv2.fillPoly(frame, [poly], col, cv2.LINE_AA, shift=3)
+        m = np.zeros(frame.shape[:2], np.float32)
+        cv2.fillPoly(m, [poly], a, cv2.LINE_AA, shift=3)
+        frame += m[..., None] * (np.array(color, np.float32) / 255)      # additive light: never a dark fleck over a bright subject
 
 # ── the swarm: particles that become a shape ────────────────────────────────
 def sample_mask(rgba, n, seed=1):

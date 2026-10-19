@@ -1,0 +1,41 @@
+{
+ "template": "juno",
+ "words": [
+  {
+   "text": "in",
+   "start": 0.08,
+   "end": 0.54
+  },
+  {
+   "text": "the",
+   "start": 0.54,
+   "end": 0.64
+  },
+  {
+   "text": "style",
+   "start": 0.64,
+   "end": 0.98
+  },
+  {
+   "text": "you",
+   "start": 0.98,
+   "end": 1.26
+  },
+  {
+   "text": "like,",
+   "start": 1.26,
+   "end": 2.14
+  }
+ ],
+ "duration": 2.14,
+ "fps": 60,
+ "t0": 18.35,
+ "config": {
+  "typography": {
+   "fontSize": 6.0
+  },
+  "position": {
+   "verticalOffset": 0.7
+  }
+ }
+}

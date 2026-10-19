@@ -125,9 +125,21 @@ def timings(wav, out_json, script=None, model='base'):
         else:
             merged.append(w)
     words = merged
-    if script:
+    if script:   # restore the script's spelling (brand names, digits Whisper wrote as numerals) by aligning the two
+        import difflib
         sw = re.findall(r"[\w'’-]+[.,!?…]*", script)
-        if len(sw) == len(words):
-            for w, s in zip(words, sw): w['w'] = s
+        key = lambda x: re.sub(r"[^a-z0-9]", '', x.lower())
+        ops = difflib.SequenceMatcher(None, [key(w['w']) for w in words], [key(x) for x in sw], autojunk=False).get_opcodes()
+        out = []
+        for op, i1, i2, j1, j2 in ops:
+            if op == 'equal' or (op == 'replace' and i2 - i1 == j2 - j1):
+                for w, x in zip(words[i1:i2], sw[j1:j2]): w['w'] = x; out.append(w)
+            elif op == 'replace' and i2 - i1 == 1:            # one heard token = several script words ("200" → "two hundred")
+                w = words[i1]; n = j2 - j1; dur = (w['end'] - w['start']) / n
+                for k, x in enumerate(sw[j1:j2]):
+                    out.append({'w': x, 'start': round(w['start'] + k * dur, 3), 'end': round(w['start'] + (k + 1) * dur, 3)})
+            else:
+                out.extend(words[i1:i2])
+        words = out
     json.dump(words, open(out_json, 'w'), indent=1)
     return words

@@ -27,7 +27,10 @@ Read these before you build (they are short and they are the craft):
 - `reference/examples/`: worked examples. **`the-link/` is the reference implementation**: a complete
   film.py (word slams, a squeeze-to-9:16 hook, typing, sorting cards, a dive into a thumbnail, a reframe window,
   real captions in a phone, a real app screen, a swarm into Zing) with its brief, script and caption job.
-  `the-path.md` is the first film and its lessons.
+  `the-path.md` is the first film and its lessons. `got-you/` is a 38 s story promo with nine stations (a scrolling
+  wall hook, a stuck follower counter, Zing's entrance, link → highlights, three real caption styles, reframing for
+  podcast / stream / gameplay with original code-drawn game footage, B-roll, a week calendar with the official
+  platform marks and honest labels).
 
 ## Workflow
 The owner prefers one-shot work: show the brief, then carry on to the finished video without waiting, unless

@@ -333,7 +333,7 @@ def load_rgba(path, max_h=None):
         if max_h and im.height > max_h:
             im = im.resize((int(im.width * max_h / im.height), max_h), Image.LANCZOS)
         _img_cache[k] = np.asarray(im).copy()
-        if len(_img_cache) > 600: _img_cache.clear()
+        if len(_img_cache) > 64: _img_cache.clear()    # bounded: every render worker holds its own copy
     return _img_cache[k]
 
 def pil_to_rgba(im):
